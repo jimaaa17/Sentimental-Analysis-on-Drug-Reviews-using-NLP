@@ -23,5 +23,8 @@ Review|Patient review
 date|Date of review entry
 usefulCount| number of users who found review useful
 
-### Data Preprocessing
+### How is Data Preprocessing done in Apache Spark?
+1. Fit pipeline
 ![](Spark_fit.PNG)
+2. Transform Pipeline
+![](Spark_Transform.PNG)
