@@ -22,3 +22,5 @@ condition|Name of condition
 Review|Patient review
 date|Date of review entry
 usefulCount| number of users who found review useful
+
+### Data Preprocessing
