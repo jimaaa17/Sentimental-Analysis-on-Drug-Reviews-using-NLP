@@ -13,7 +13,7 @@ Online health-related sites and opinion forums contain ample information about t
 - Can you determine if a review is positive, neutral, or negative?
 - What are the key factors of sentiment derived from rating on basis of drug review?
 
-### Data Dictionary
+### Data Dictionary:
 Name | Description
 -----|-------------
 uniqueID|Unique id for the review
