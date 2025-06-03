@@ -113,7 +113,7 @@ clean_data.show()
 # %%
 (training,testing) = clean_data.randomSplit([0.7,0.3])
 svc = LinearSVC(featuresCol='features', labelCol='label')
-svc_model = svc.fit(clean_data)
+svc_model = svc.fit(training)
 
 # %% [markdown]
 # ## Prediction on training data
