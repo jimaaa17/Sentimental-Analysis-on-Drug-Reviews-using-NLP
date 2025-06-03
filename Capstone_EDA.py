@@ -40,7 +40,7 @@ df_train.head()
 
 
 # %%
-#Computing the new column sentinment on basis of rating 
+#Computing the new column sentiment on basis of rating
 def sentiment(x):
     if x>5:
         return 1
