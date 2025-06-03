@@ -114,7 +114,7 @@ clean_data.show()
 # %%
 (training,testing) = clean_data.randomSplit([0.7,0.3])
 logr = LogisticRegression(featuresCol='features', labelCol='label')
-logr_model = logr.fit(clean_data)
+logr_model = logr.fit(training)
 
 # %% [markdown]
 # ## Prediction on training data
