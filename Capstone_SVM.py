@@ -53,7 +53,7 @@ df = df_train.join(df_test, on=['uniqueID', 'drugName', 'condition','review','ra
 
 
 # %%
-#Computing setniment column based on rating
+#Computing sentiment column based on rating
 sentiment = when(col("rating")<=5, 0).otherwise(1)
 
 df = df.withColumn("sentiment",sentiment)
@@ -108,12 +108,12 @@ clean_data = clean_data.select(['label','features'])
 clean_data.show()
 
 # %% [markdown]
-# ## Decision Tree Classfier Model Estimator and Training the data
+# ## Linear SVC Model Estimator and Training the data
 
 # %%
 (training,testing) = clean_data.randomSplit([0.7,0.3])
 svc = LinearSVC(featuresCol='features', labelCol='label')
-svc_model = svc.fit(clean_data)
+svc_model = svc.fit(training)
 
 # %% [markdown]
 # ## Prediction on training data
