@@ -28,3 +28,18 @@ usefulCount| number of users who found review useful
 ![](Spark_fit.PNG)
 2. Transform Pipeline
 ![](Spark_Transform.PNG)
+
+## Usage
+
+1. Place `train_raw.csv` and `test_raw.csv` inside the `data/` directory or provide their locations when running the pipeline.
+2. Install PySpark: `pip install pyspark`.
+3. Run the training pipeline:
+   ```bash
+   python main.py --train data/train_raw.csv --test data/test_raw.csv --model logistic
+   ```
+   Replace `logistic` with `random_forest` to use the Random Forest model.
+4. Notebooks for experimentation are located in `notebooks/`.
+5. Run tests using `pytest`:
+   ```bash
+   pytest -q
+   ```
