@@ -54,7 +54,7 @@ df = df_train.join(df_test, on=['uniqueID', 'drugName', 'condition','review','ra
 
 
 # %%
-#Computing setniment column based on rating
+#Computing sentiment column based on rating
 sentiment = when(col("rating")<=5, 0).otherwise(1)
 
 df = df.withColumn("sentiment",sentiment)
