@@ -31,15 +31,44 @@ usefulCount| number of users who found review useful
 
 ## Usage
 
-1. Place `train_raw.csv` and `test_raw.csv` inside the `data/` directory or provide their locations when running the pipeline.
-2. Install PySpark: `pip install pyspark`.
-3. Run the training pipeline:
-   ```bash
-   python main.py --train data/train_raw.csv --test data/test_raw.csv --model logistic
-   ```
-   Replace `logistic` with `random_forest` to use the Random Forest model.
-4. Notebooks for experimentation are located in `notebooks/`.
-5. Run tests using `pytest`:
-   ```bash
-   pytest -q
-   ```
+### 1. **Web Dashboard (Recommended for Business/Pharmacology Teams)**
+
+- **Streamlit App:**  
+  Launch the interactive dashboard for exploring sentiment, trends, and model comparison.
+  ```bash
+  streamlit run app.py
+  ```
+  - Upload your training and test CSV files via the sidebar.
+  - Select model(s), filter by condition, and view insights and downloadable results.
+
+### 2. **Python Pipeline (CLI/Script Mode)**
+
+- **Run the training and evaluation pipeline:**
+  ```bash
+  python main.py --train data/train_raw.csv --test data/test_raw.csv --model logistic
+  ```
+  - Replace `logistic` with `random_forest`, `svm`, `naive_bayes`, or `hf_transformer` for other models.
+  - Outputs predictions and metrics to the console and saves results to disk.
+
+### 3. **Jupyter Notebooks**
+
+- **Experiment and prototype in notebooks:**
+  - Notebooks for data exploration and model experimentation are located in the `notebooks/` directory.
+
+### 4. **Testing**
+
+- **Run all unit tests to ensure code quality and correctness:**
+  ```bash
+  pytest -q
+  ```
+  or, for standard unittest:
+  ```bash
+  python -m unittest discover -s tests
+  ```
+- Test files are located in the `tests/` directory and cover data loading, preprocessing, and model functionality.
+- Make sure your test data files exist at the specified paths or update the test scripts accordingly.
+
+---
+
+**Note:**  
+- For large models (e.g., transformers), ensure you have sufficient hardware or use quantized versions.
