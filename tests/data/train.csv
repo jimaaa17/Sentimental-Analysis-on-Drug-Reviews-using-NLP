@@ -1,3 +1,0 @@
-uniqueID,drugName,condition,review,rating,date,usefulCount
-1,DrugA,CondA,"Good",7,2020-01-01,1
-2,DrugB,CondB,"Bad",3,2020-01-02,2

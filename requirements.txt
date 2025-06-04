@@ -1,1 +1,17 @@
+numpy
+pandas
+scikit-learn
+matplotlib
+nltk
+beautifulsoup4
+statsmodels
+scipy
+requests
+tqdm
+ipython
 pytest
+joblib
+streamlit
+seaborn
+transformers
+torch

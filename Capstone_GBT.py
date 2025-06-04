@@ -1,169 +1,46 @@
-# To add a new cell, type '# %%'
-# To add a new markdown cell, type '# %% [markdown]'
-# %%
-#Importing pyspark session
-import pyspark
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import roc_auc_score, accuracy_score, confusion_matrix, classification_report
 
+# Load data
+df_train = pd.read_csv('data/train/train_raw.csv')
+df_test = pd.read_csv('data/test/drugsComTest_raw.csv')
 
-# %%
-#Importing pyspark package
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import isnan, when, count, col,trim,round, length
-from pyspark import SparkContext
+# Combine train and test for consistent vectorization
+df = pd.concat([df_train, df_test], ignore_index=True)
 
-import pyspark.sql.functions as F
-from pyspark.sql.types import *
-spark=SparkSession.builder.appName('drug_dataset').getOrCreate()
+# Create sentiment label
+df['sentiment'] = (df['rating'] > 5).astype(int)
 
-# %% [markdown]
-# ## Clean and Prepare the Data
+# Fill missing reviews
+df['review'] = df['review'].fillna('')
 
-# %%
-#Importing train data from S3
-df_train = spark.read.csv('s3://capstone-drug-dataset/captsone-drug-dataset/train_raw.csv',inferSchema=True, header=True,quote='"',escape= "\"",multiLine=True)
-columnmap = {}
-for column in df_train.columns:
-  if column.endswith("\r"):
-    columnmap[column] = column.rstrip()
-for c in columnmap.keys():
-  df_train = df_train.withColumn(columnmap[c], F.col(c))
-  df_train = df_train.drop(c)
+# TF-IDF vectorization
+vectorizer = TfidfVectorizer(max_features=10000, stop_words='english')
+X = vectorizer.fit_transform(df['review'])
+y = df['sentiment'].values
 
+# Split back into train/test
+X_train = X[:len(df_train)]
+y_train = y[:len(df_train)]
+X_test = X[len(df_train):]
+y_test = y[len(df_train):]
 
-# %%
-#Importing test data from S3
-df_test = spark.read.csv('s3://capstone-drug-dataset/captsone-drug-dataset/test_raw.csv',inferSchema=True, header=True,quote='"',escape= "\"",multiLine=True)
-for column in df_test.columns:
-  if column.endswith("\r"):
-    columnmap[column] = column.rstrip()
-for c in columnmap.keys():
-  df_test = df_test.withColumn(columnmap[c], F.col(c))
-  df_test = df_test.drop(c)
+# Train/test split (optional, for validation)
+# X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
 
+# Train Gradient Boosting Classifier
+gbt = GradientBoostingClassifier(n_estimators=100, random_state=42)
+gbt.fit(X_train, y_train)
 
-# %%
-#Test data samples
-df_test.show(10)
-df_train.printSchema
-df_train = df_train.withColumn("usefulCount",round(df_train["usefulCount"]).cast('integer'))
+# Predict and evaluate
+y_pred = gbt.predict(X_test)
+y_proba = gbt.predict_proba(X_test)[:, 1]
 
-
-# %%
-#Joining train and test data set
-df = df_train.join(df_test, on=['uniqueID', 'drugName', 'condition','review','rating','date','usefulCount'], how='left_outer')
-
-
-# %%
-#Computing sentiment column based on rating
-sentiment = when(col("rating")<=5, 0).otherwise(1)
-
-df = df.withColumn("sentiment",sentiment)
-df = df.withColumn('length',length(df['review']))
-
-# %% [markdown]
-# ## Feature Transformation
-
-# %%
-
-from pyspark.ml.feature import Tokenizer,StopWordsRemover, CountVectorizer,IDF,StringIndexer
-
-tokenizer = Tokenizer(inputCol="review", outputCol="token_text")
-stopremove = StopWordsRemover(inputCol='token_text',outputCol='stop_tokens')
-count_vec = CountVectorizer(inputCol='stop_tokens',outputCol='c_vec')
-idf = IDF(inputCol="c_vec", outputCol="tf_idf")
-pos_neg = StringIndexer(inputCol='sentiment',outputCol='label')
-
-
-# %%
-from pyspark.ml.feature import VectorAssembler
-from pyspark.ml.linalg import Vector
-
-
-# %%
-clean_up = VectorAssembler(inputCols=['tf_idf','length'],outputCol='features')
-
-
-# %%
-from pyspark.ml.classification import NaiveBayes
-from pyspark.ml.classification import LinearSVC
-from pyspark.ml.classification import LogisticRegression
-from pyspark.ml.classification import DecisionTreeClassifier
-from pyspark.ml.classification import GBTClassifier
-from pyspark.ml.classification import RandomForestClassifier
-
-from pyspark.ml.classification import MultilayerPerceptronClassifier
-from pyspark.ml.classification import OneVsRest
-
-# %% [markdown]
-# ## Building pipeline and fit model
-
-# %%
-from pyspark.ml import Pipeline
-data_prep_pipe = Pipeline(stages=[pos_neg,tokenizer,stopremove,count_vec,idf,clean_up])
-cleaner = data_prep_pipe.fit(df)
-cleaner
-
-
-# %%
-clean_data = cleaner.transform(df)
-clean_data = clean_data.select(['label','features'])
-clean_data.show()
-
-# %% [markdown]
-# ## GBT Model Estimator and Training the data
-
-# %%
-(training,testing) = clean_data.randomSplit([0.7,0.3])
-gbt = GBTClassifier(featuresCol='features', labelCol='label')
-gbt_model = gbt.fit(training)
-
-# %% [markdown]
-# ## Prediction on training data
-
-# %%
-pred_training_gbt = gbt_model.transform(training)
-show_columns = ['features', 'label', 'prediction', 'rawPrediction', 'probability']
-pred_training_gbt.select(show_columns).show(5, truncate=True)
-
-# %% [markdown]
-# ## Evaluator
-
-# %%
-from pyspark.ml.evaluation import BinaryClassificationEvaluator
-
-evaluator = BinaryClassificationEvaluator(rawPredictionCol='prediction')
-print('Accuracy on training data (areaUnderROC): ', evaluator.setMetricName('areaUnderROC').evaluate(pred_training_gbt))
-
-# %% [markdown]
-# ## Prediction on test data
-
-# %%
-pred_test_gbt= gbt_model.transform(testing)
-pred_test_gbt.select(show_columns).show(5, truncate=True)
-print('Accuracy on testing data (areaUnderROC): ', evaluator.setMetricName('areaUnderROC').evaluate(pred_test_gbt))
-
-# %% [markdown]
-# ## Confusion Matrix
-
-# %%
-
-label_pred_train = pred_training_gbt.select('label', 'prediction')
-label_pred_train.rdd.zipWithIndex().countByKey()
-
-
-label_pred_test = pred_test_gbt.select('label', 'prediction')
-label_pred_test.rdd.zipWithIndex().countByKey()
-
-# %% [markdown]
-# ## Accuracy of the model
-
-# %%
-from pyspark.ml.evaluation import BinaryClassificationEvaluator
-acc_eval = BinaryClassificationEvaluator()
-acc = acc_eval.evaluate(pred_test_gbt)
-print("Accuracy of model at predicting sentiment was: {}".format(acc))
-
-
-# %%
-
-
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("ROC-AUC:", roc_auc_score(y_test, y_proba))
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+print("Classification Report:\n", classification_report(y_test, y_pred))

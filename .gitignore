@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+env/
+venv/
+*.env
+
+# IDE
+.vscode/
+.idea/
+
+# Jupyter Notebook
+*.ipynb_checkpoints
+
+# Data & Models
+*.csv
+*.tsv
+*.xlsx
+*.h5
+*.joblib
+*.pkl
+*.sav
+*.model
+
+# Logs
+*.log
+
+# Node
+node_modules/
+build/
+dist/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Streamlit
+.streamlit/
+
+# Others
+*.bak
